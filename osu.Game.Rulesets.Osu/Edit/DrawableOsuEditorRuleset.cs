@@ -99,6 +99,7 @@ namespace osu.Game.Rulesets.Osu.Edit
                 // adjust the visuals of top-level object types to make them stay on screen for longer than usual.
                 switch (hitObject)
                 {
+                    case DrawableSliderRepeat _:
                     case DrawableSlider _:
                     case DrawableHitCircle _:
                         // Get the existing fade out transform
@@ -110,7 +111,18 @@ namespace osu.Game.Rulesets.Osu.Edit
                         hitObject.RemoveTransform(existing);
 
                         using (hitObject.BeginAbsoluteSequence(hitObject.HitStateUpdateTime))
-                            hitObject.FadeOut(EDITOR_HIT_OBJECT_FADE_OUT_EXTENSION).Expire();
+                        {
+                            if (hitObject is DrawableSlider slider)
+                                slider.Body.FadeOut(EDITOR_HIT_OBJECT_FADE_OUT_EXTENSION / 3, Easing.None);
+
+                            if (hitObject is DrawableSliderRepeat sliderRepeat)
+                            {
+                                sliderRepeat.Arrow.FadeOut(0);
+                            }
+
+                            hitObject.FadeOut(EDITOR_HIT_OBJECT_FADE_OUT_EXTENSION, Easing.None).Expire();
+                        }
+
                         break;
                 }
             }
