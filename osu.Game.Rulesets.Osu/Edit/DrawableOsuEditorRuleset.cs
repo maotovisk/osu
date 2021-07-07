@@ -62,6 +62,8 @@ namespace osu.Game.Rulesets.Osu.Edit
                     circle.ApproachCircle
                           .FadeOutFromOne(EDITOR_HIT_OBJECT_FADE_OUT_EXTENSION * 4)
                           .Expire();
+                    using (circle.BeginAbsoluteSequence(circle.HitStateUpdateTime))
+                        circle.TransformBindableTo(circle.AccentColour, Colour4.White, 0, Easing.None);
 
                     circle.ApproachCircle.ScaleTo(1.1f, 300, Easing.OutQuint);
                 }
@@ -83,6 +85,15 @@ namespace osu.Game.Rulesets.Osu.Edit
                 {
                     repeat.Arrow.ApplyTransformsAt(hitObject.StateUpdateTime, true);
                     repeat.Arrow.ClearTransformsAfter(hitObject.StateUpdateTime, true);
+
+                    using (repeat.BeginAbsoluteSequence(repeat.HitStateUpdateTime))
+                        repeat.TransformBindableTo(repeat.AccentColour, Colour4.White, 0, Easing.None);
+                }
+
+                if (hitObject is DrawableSliderTail tail)
+                {
+                    using (tail.BeginAbsoluteSequence(tail.HitStateUpdateTime))
+                        tail.TransformBindableTo(tail.AccentColour, Colour4.White, 0, Easing.None);
                 }
 
                 // adjust the visuals of top-level object types to make them stay on screen for longer than usual.
