@@ -24,7 +24,7 @@ namespace osu.Game.Rulesets.Osu.Edit
         /// Hit objects are intentionally made to fade out at a constant slower rate than in gameplay.
         /// This allows a mapper to gain better historical context and use recent hitobjects as reference / snap points.
         /// </summary>
-        public const double EDITOR_HIT_OBJECT_FADE_OUT_EXTENSION = 700;
+        public const double EDITOR_HIT_OBJECT_FADE_OUT_EXTENSION = 800;
 
         public DrawableOsuEditorRuleset(Ruleset ruleset, IBeatmap beatmap, IReadOnlyList<Mod> mods)
             : base(ruleset, beatmap, mods)
