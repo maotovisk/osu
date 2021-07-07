@@ -65,7 +65,7 @@ namespace osu.Game.Rulesets.Osu.Edit
                     using (circle.BeginAbsoluteSequence(circle.HitStateUpdateTime))
                         circle.TransformBindableTo(circle.AccentColour, Colour4.White, 0, Easing.None);
 
-                    circle.ApproachCircle.ScaleTo(1.1f, 300, Easing.OutQuint);
+                    circle.ApproachCircle.ScaleTo(1.1f, 100, Easing.Out);
                 }
 
                 if (hitObject is IHasMainCirclePiece mainPieceContainer)
