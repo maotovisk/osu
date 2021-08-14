@@ -12,6 +12,7 @@ using osu.Framework.Graphics.Containers;
 using osu.Framework.Testing;
 using osu.Game.Graphics.UserInterface;
 using osu.Game.Overlays.Mods;
+using osu.Game.Overlays.Settings;
 using osu.Game.Rulesets;
 using osu.Game.Rulesets.Mania;
 using osu.Game.Rulesets.Mania.Mods;
@@ -50,6 +51,38 @@ namespace osu.Game.Tests.Visual.UserInterface
             AddStep("show", () => modSelect.Show());
         }
 
+        /// <summary>
+        /// Ensure that two mod overlays are not cross polluting via central settings instances.
+        /// </summary>
+        [Test]
+        public void TestSettingsNotCrossPolluting()
+        {
+            Bindable<IReadOnlyList<Mod>> selectedMods2 = null;
+
+            AddStep("select diff adjust", () => SelectedMods.Value = new Mod[] { new OsuModDifficultyAdjust() });
+
+            AddStep("set setting", () => modSelect.ChildrenOfType<SettingsSlider<float>>().First().Current.Value = 8);
+
+            AddAssert("ensure setting is propagated", () => SelectedMods.Value.OfType<OsuModDifficultyAdjust>().Single().CircleSize.Value == 8);
+
+            AddStep("create second bindable", () => selectedMods2 = new Bindable<IReadOnlyList<Mod>>(new Mod[] { new OsuModDifficultyAdjust() }));
+
+            AddStep("create second overlay", () =>
+            {
+                Add(modSelect = new TestModSelectOverlay().With(d =>
+                {
+                    d.Origin = Anchor.TopCentre;
+                    d.Anchor = Anchor.TopCentre;
+                    d.SelectedMods.BindTarget = selectedMods2;
+                }));
+            });
+
+            AddStep("show", () => modSelect.Show());
+
+            AddAssert("ensure first is unchanged", () => SelectedMods.Value.OfType<OsuModDifficultyAdjust>().Single().CircleSize.Value == 8);
+            AddAssert("ensure second is default", () => selectedMods2.Value.OfType<OsuModDifficultyAdjust>().Single().CircleSize.Value == null);
+        }
+
         [Test]
         public void TestSettingsResetOnDeselection()
         {
@@ -61,10 +94,10 @@ namespace osu.Game.Tests.Visual.UserInterface
 
             AddAssert("selected mod matches", () => (SelectedMods.Value.Single() as OsuModDoubleTime)?.SpeedChange.Value == 1.2);
 
-            AddStep("deselect", () => modSelect.DeselectAllButton.Click());
+            AddStep("deselect", () => modSelect.DeselectAllButton.TriggerClick());
             AddAssert("selected mods empty", () => SelectedMods.Value.Count == 0);
 
-            AddStep("reselect", () => modSelect.GetModButton(osuModDoubleTime).Click());
+            AddStep("reselect", () => modSelect.GetModButton(osuModDoubleTime).TriggerClick());
             AddAssert("selected mod has default value", () => (SelectedMods.Value.Single() as OsuModDoubleTime)?.SpeedChange.IsDefault == true);
         }
 
@@ -383,7 +416,6 @@ namespace osu.Game.Tests.Visual.UserInterface
                 {
                     Anchor = Anchor.TopRight,
                     Origin = Anchor.TopRight,
-                    AutoSizeAxes = Axes.Both,
                     Position = new Vector2(-5, 25),
                     Current = { BindTarget = modSelect.SelectedMods }
                 }

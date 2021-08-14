@@ -48,6 +48,9 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
         [Resolved]
         private OngoingOperationTracker ongoingOperationTracker { get; set; }
 
+        [Resolved]
+        private Bindable<Room> currentRoom { get; set; }
+
         private MultiplayerMatchSettingsOverlay settingsOverlay;
 
         private readonly IBindable<bool> isConnected = new Bindable<bool>();
@@ -173,7 +176,7 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
                                                                                 Spacing = new Vector2(10, 0),
                                                                                 Children = new Drawable[]
                                                                                 {
-                                                                                    new PurpleTriangleButton
+                                                                                    new UserModSelectButton
                                                                                     {
                                                                                         Anchor = Anchor.CentreLeft,
                                                                                         Origin = Anchor.CentreLeft,
@@ -271,7 +274,18 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
             isConnected.BindValueChanged(connected =>
             {
                 if (!connected.NewValue)
-                    Schedule(this.Exit);
+                    handleRoomLost();
+            }, true);
+
+            currentRoom.BindValueChanged(room =>
+            {
+                if (room.NewValue == null)
+                {
+                    // the room has gone away.
+                    // this could mean something happened during the join process, or an external connection issue occurred.
+                    // one specific scenario is where the underlying room is created, but the signalr server returns an error during the join process. this triggers a PartRoom operation (see https://github.com/ppy/osu/blob/7654df94f6f37b8382be7dfcb4f674e03bd35427/osu.Game/Screens/OnlinePlay/Multiplayer/MultiplayerRoomManager.cs#L97)
+                    handleRoomLost();
+                }
             }, true);
         }
 
@@ -310,7 +324,9 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
 
         public override bool OnExiting(IScreen next)
         {
-            if (client.Room == null)
+            // the room may not be left immediately after a disconnection due to async flow,
+            // so checking the IsConnected status is also required.
+            if (client.Room == null || !client.IsConnected.Value)
             {
                 // room has not been created yet; exit immediately.
                 return base.OnExiting(next);
@@ -432,8 +448,23 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
 
         private void onRoomUpdated()
         {
+            // may happen if the client is kicked or otherwise removed from the room.
+            if (client.Room == null)
+            {
+                handleRoomLost();
+                return;
+            }
+
             Scheduler.AddOnce(UpdateMods);
         }
+
+        private void handleRoomLost() => Schedule(() =>
+        {
+            if (this.IsCurrentScreen())
+                this.Exit();
+            else
+                ValidForResume = false;
+        });
 
         private void onLoadRequested()
         {
@@ -459,16 +490,18 @@ namespace osu.Game.Screens.OnlinePlay.Multiplayer
         protected override Screen CreateGameplayScreen()
         {
             Debug.Assert(client.LocalUser != null);
+            Debug.Assert(client.Room != null);
 
             int[] userIds = client.CurrentMatchPlayingUserIds.ToArray();
+            MultiplayerRoomUser[] users = userIds.Select(id => client.Room.Users.First(u => u.UserID == id)).ToArray();
 
             switch (client.LocalUser.State)
             {
                 case MultiplayerUserState.Spectating:
-                    return new MultiSpectatorScreen(userIds);
+                    return new MultiSpectatorScreen(users.Take(PlayerGrid.MAX_PLAYERS).ToArray());
 
                 default:
-                    return new PlayerLoader(() => new MultiplayerPlayer(SelectedItem.Value, userIds));
+                    return new PlayerLoader(() => new MultiplayerPlayer(SelectedItem.Value, users));
             }
         }
 

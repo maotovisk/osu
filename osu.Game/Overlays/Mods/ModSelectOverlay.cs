@@ -404,11 +404,11 @@ namespace osu.Game.Overlays.Mods
             switch (e.Key)
             {
                 case Key.Number1:
-                    DeselectAllButton.Click();
+                    DeselectAllButton.TriggerClick();
                     return true;
 
                 case Key.Number2:
-                    CloseButton.Click();
+                    CloseButton.TriggerClick();
                     return true;
             }
 
@@ -429,7 +429,7 @@ namespace osu.Game.Overlays.Mods
                 if (!Stacked)
                     modEnumeration = ModUtils.FlattenMods(modEnumeration);
 
-                section.Mods = modEnumeration.Select(getValidModOrNull).Where(m => m != null);
+                section.Mods = modEnumeration.Select(getValidModOrNull).Where(m => m != null).Select(m => m.DeepClone());
             }
 
             updateSelectedButtons();

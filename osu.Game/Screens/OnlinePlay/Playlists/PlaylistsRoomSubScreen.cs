@@ -163,7 +163,7 @@ namespace osu.Game.Screens.OnlinePlay.Playlists
                                                                                 Spacing = new Vector2(10, 0),
                                                                                 Children = new Drawable[]
                                                                                 {
-                                                                                    new PurpleTriangleButton
+                                                                                    new UserModSelectButton
                                                                                     {
                                                                                         Anchor = Anchor.CentreLeft,
                                                                                         Origin = Anchor.CentreLeft,
@@ -230,7 +230,11 @@ namespace osu.Game.Screens.OnlinePlay.Playlists
                 settingsOverlay = new PlaylistsMatchSettingsOverlay
                 {
                     RelativeSizeAxes = Axes.Both,
-                    EditPlaylist = () => this.Push(new PlaylistsSongSelect()),
+                    EditPlaylist = () =>
+                    {
+                        if (this.IsCurrentScreen())
+                            this.Push(new PlaylistsSongSelect());
+                    },
                     State = { Value = roomId.Value == null ? Visibility.Visible : Visibility.Hidden }
                 }
             });
