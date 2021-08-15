@@ -190,8 +190,7 @@ namespace osu.Game.Rulesets.Objects.Drawables
             comboIndexBindable.BindValueChanged(_ => UpdateComboColour());
             comboIndexWithOffsetsBindable.BindValueChanged(_ => UpdateComboColour(), true);
 
-            // Apply transforms
-            updateState(State.Value, true);
+            updateState(ArmedState.Idle, true);
         }
 
         /// <summary>
